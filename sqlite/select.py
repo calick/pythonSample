@@ -43,6 +43,10 @@ try:
         total+=row[2]
     print(total)
 
+    # 最後に追加したレコード取得
+    cursor.execute('SELECT * FROM sample ORDER BY id desc limit 1')
+    print(cursor.fetchone())
+
 except sqlite3.Error as e:
     print("sqlite3 Error occured : ",eargs[0])
 
