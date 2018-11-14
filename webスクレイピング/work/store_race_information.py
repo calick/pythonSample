@@ -1,5 +1,4 @@
 # coding: UTF-8
-import argparse
 from bs4 import BeautifulSoup
 
 class store_race_information:
