@@ -8,18 +8,55 @@ file_path="race/201805050403.html"
 html = open(file_path,"r")
 soup = BeautifulSoup(html,"html.parser")
 
-### レース名 ###
-# title = soup.title.string.split("｜")
 title = re.split('[｜|]',soup.title.string)
-for t in title:
-    print(t)
+### レース名 ###
 print("race_name : " + title[0])
-print("race_date : " + title[1])
-print(type(title[0]))
-print(type(title[1]))
-
 ### 開催日 ###
+print("race_date : " + title[1])
 
+xml = soup.select('dl[class^="racedata fc"]')
+### 何レース目か？ ###
+print("race_number : " + xml[0].dt.string.strip().replace(" ",""))
+### 芝ダート障害 ###
+## 芝左1600m
+## 障芝 外-内2850m 菊花賞なんかも外回り
+# 種類が多いので含まれているかでチェック
+print("race_cource : " + re.split('/',xml[0].span.string)[0][0])
+### どちら回りか？ ###
+# 取り出す関数を作ったほうが良いかも
+### 距離 ###
+# 取り出す関数を作ったほうが良いかも
+### 天気 ###
+print("race_tenki : " + (re.split('/',xml[0].span.string)[1]).split(':')[1].replace(" ",""))
+### 馬場状態 ###
+print("race_bb : " + (re.split('/',xml[0].span.string)[2]).split(':')[1].replace(" ",""))
+
+
+print("---------------")
+# print(xml[0].span.string)
+# li = re.split('/',xml[0].span.string)
+# moji=li[0]
+# print(moji)
+# print(moji[0])
+# moji=moji[1:]
+# print(moji)
+
+# for l in li:
+#     print(l)
+
+### 会場 ###
+
+### 馬名 ###
+### 性 ###
+### 馬齢 ###
+### 人気 ###
+### 倍率 ###
+### 父 ###
+### 母 ###
+### 母父 ###
+### 馬体重 ###
+### 騎手 ###
+### 調教師 ###
 
 # # タグつきで同じものが２つ引っかかる
 # races = soup.find_all('a',href=re.compile("^/\?pid=race\&"))
