@@ -1,50 +1,71 @@
 # coding: UTF-8
 from bs4 import BeautifulSoup
 import re
+import horse
+import copy
 
-# file_path="race/201205040911.html"
-file_path="race/201805050403.html"
+list_result=[]
+file_path="race/201205040911.html"
+# file_path="race/201805050403.html"
 
 html = open(file_path,"r")
 soup = BeautifulSoup(html,"html.parser")
 
+race_result = horse.Horse()
+
 title = re.split('[｜|]',soup.title.string)
-### レース名 ###
-print("race_name : " + title[0])
-### 開催日 ###
-print("race_date : " + title[1])
+# レース名
+race_result.set_race_name(title[0])
+# 開催日
+race_result.set_race_date(title[1])
 
 xml = soup.select('dl[class^="racedata fc"]')
-### 何レース目か？ ###
-print("race_number : " + xml[0].dt.string.strip().replace(" ",""))
+# レース番号
+race_result.set_race_number(xml[0].dt.string.strip().replace(" ",""))
+
 ### 芝ダート障害 ###
 ## 芝左1600m
 ## 障芝 外-内2850m 菊花賞なんかも外回り
-# 種類が多いので含まれているかでチェック
+# 種類が多いのでパターンを洗い出す必要がある
+race_result.set_race_kind(re.split('/',xml[0].span.string)[0])
+
+print(re.split('/',xml[0].span.string)[0])
 print("race_cource : " + re.split('/',xml[0].span.string)[0][0])
-### どちら回りか？ ###
-# 取り出す関数を作ったほうが良いかも
-### 距離 ###
-# 取り出す関数を作ったほうが良いかも
-### 天気 ###
-print("race_tenki : " + (re.split('/',xml[0].span.string)[1]).split(':')[1].replace(" ",""))
-### 馬場状態 ###
-print("race_bb : " + (re.split('/',xml[0].span.string)[2]).split(':')[1].replace(" ",""))
 
+# 距離
+race_result.set_race_distance(re.split('/',xml[0].span.string)[0])
 
-print("---------------")
-# print(xml[0].span.string)
-# li = re.split('/',xml[0].span.string)
-# moji=li[0]
-# print(moji)
-# print(moji[0])
-# moji=moji[1:]
-# print(moji)
+# 回り(右/左)
+race_result.set_race_around(re.split('/',xml[0].span.string)[0])
 
-# for l in li:
-#     print(l)
+# 回り(外/内)
+race_result.set_race_outin(re.split('/',xml[0].span.string)[0])
+
+# 天気
+race_result.set_race_weather((re.split('/',xml[0].span.string)[1]).split(':')[1].replace(" ",""))
+
+# 馬場状態
+race_result.set_race_ground_state((re.split('/',xml[0].span.string)[2]).split(':')[1].replace(" ",""))
 
 ### 会場 ###
+# classがactiveなのは会場と結果払い戻しの部分で１つめに会場が入るのでこの式にした
+race_result.set_race_course(soup.select('a.active')[0].string)
+
+race_table = soup.select('table.race_table_01')
+horses = race_table[0].find_all('tr')
+# 1行目はいらないので削除
+horses.pop(0)
+
+# result = copy.deepcopy(race_result)
+
+for horse in horses:
+    # result = copy.deepcopy(race_result)
+    race_result.set_horse_name(horse.find_all('a',href=re.compile("^/horse"))[0].string)
+    # a=horse.find_all('a',href=re.compile("^/horse"))
+    # print(a[0].string)
+    # races = soup.find_all('a',href=re.compile("^/\?pid=race\&"))
+    list_result.append(race_result)
+
 
 ### 馬名 ###
 ### 性 ###
@@ -58,6 +79,9 @@ print("---------------")
 ### 騎手 ###
 ### 調教師 ###
 
+# # お試し
+# print("-----------------------")
+
 # # タグつきで同じものが２つ引っかかる
 # races = soup.find_all('a',href=re.compile("^/\?pid=race\&"))
 # list_race=[]
@@ -70,9 +94,6 @@ print("---------------")
 # for url in list_uniq:
 #     print(url)
 
-
-# # お試し
-# print("-----------------------")
 # # li = soup.select('div[class^="racename"]')
 # li = soup.select('div.racename')
 # for l in li:
@@ -85,6 +106,11 @@ print("---------------")
 #         print(b.get('href'))
 
 # print([a.get("href") for a in li.find_all("a")])
+print("---------------")
+race_result.print()
+
+# for i in list_result:
+#     print(i.get_horse_name())
 
 html.close()
 

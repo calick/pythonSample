@@ -1,27 +1,22 @@
 # coding: UTF-8
 from enum import Enum, auto
+import re
 
 class Kind(Enum):
     SHIBA="芝"
     DATO="ダ"
-    SYOGAI="障"
+    SYOGAI_S="障芝"
+    SYOGAI_SD="障芝 ダート"
 
 class Around(Enum):
     RIGHT="右"
     LEFT="左"
+    LINE="直線"
 
-class Distance(Enum):
-    D_1000="1000m"
-    D_1200="1200m"
-    D_1400="1400m"
-    D_1600="1600m"
-    D_1800="1800m"
-    D_2000="2000m"
-    D_2100="2100m"
-    D_2400="2400m"
-    D_2500="2500m"
-    D_3000="3000m"
-    D_3200="3200m"    
+class OUTIN(Enum):
+    OUT="外"
+    IN_OUT="内-外"
+    OUT_IN="外-内"
 
 class Horse:
     # def race_id = "" #出走したレースを一意に識別するID
@@ -45,11 +40,11 @@ class Horse:
     # def race_grade #レースのグレード
     ## 1年分の情報を出力して分類を検討する
 
-    # def  #距離
+    # 距離
+    ## パターンが大量にあるため正規表現で
     def set_race_distance(self,data):
-        for d in Distance:
-            if d.value in data:
-                self.race_distance=d.value
+        pattern=r"\d\d\d\dm"
+        self.race_distance=re.search(pattern,data).group()
 
     # レース種別（芝/ダート/障害）
     def set_race_kind(self,data):
@@ -57,11 +52,19 @@ class Horse:
             if k.value in data:
                 self.race_kind=k.value
 
-    # 周り（左/右）
+    # 周り（左/右/直線）
     def set_race_around(self,data):
+        self.race_around=""
         for a in Around:
             if a.value in data:
                 self.race_around=a.value
+    
+    # 外 - 内 ※外回りか
+    def set_race_outin(self,data):
+        self.race_outin=""
+        for o in OUTIN:
+            if o.value in data:
+                self.race_outin=o.value
     
     # 天気
     def set_race_weather(self,race_weather):
@@ -73,6 +76,11 @@ class Horse:
 
     # def horse_id #馬id
     # def horse_name #馬名
+    def set_horse_name(self,horce_name):
+        self.horce_name=horce_name
+    def get_horse_name(self):
+        return self.horce_name
+
     # def horse_wakuban #枠番
     # def horse_umaban #馬番
     # def horse_number #着順
@@ -97,10 +105,13 @@ class Horse:
     def print(self):
         print(self.race_course)
         print(self.race_name)
+        print(self.race_distance)
         print(self.race_date)
         print(self.race_number)
         print(self.race_weather)
         print(self.race_ground_state)
         print(self.race_kind)
         print(self.race_around)
+        print(self.race_outin)
+        print(self.horce_name)
 
