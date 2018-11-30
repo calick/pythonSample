@@ -13,5 +13,5 @@ store_race_information_class = store_race_information.store_race_information()
 # store_race_information_class = store_race_infomation("test")
 li=glob.glob(args.dir + "/*")
 for path in li:
-    store_race_information_class.store_race(path)
-
+    # store_race_information_class.store_race(path)
+    print(path)

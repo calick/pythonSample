@@ -2,7 +2,6 @@
 from bs4 import BeautifulSoup
 import re
 import horse
-import copy
 
 list_result=[]
 file_path="race/201205040911.html"
@@ -14,26 +13,32 @@ soup = BeautifulSoup(html,"html.parser")
 race_result = horse.Horse()
 
 title = re.split('[｜|]',soup.title.string)
+
+# レースID
+# classがactiveなのは会場と結果払い戻しの部分で１つめに会場が入るのでこの式にした
+race_result.set_race_id(re.split('/',soup.select('a.active')[0].get('href'))[2])
+
 # レース名
 race_result.set_race_name(title[0])
+
 # 開催日
 race_result.set_race_date(title[1])
+
+### 会場 ###
+# classがactiveなのは会場と結果払い戻しの部分で１つめに会場が入るのでこの式にした
+race_result.set_race_course(soup.select('a.active')[0].string)
 
 xml = soup.select('dl[class^="racedata fc"]')
 # レース番号
 race_result.set_race_number(xml[0].dt.string.strip().replace(" ",""))
 
-### 芝ダート障害 ###
-## 芝左1600m
-## 障芝 外-内2850m 菊花賞なんかも外回り
-# 種類が多いのでパターンを洗い出す必要がある
-race_result.set_race_kind(re.split('/',xml[0].span.string)[0])
-
-print(re.split('/',xml[0].span.string)[0])
-print("race_cource : " + re.split('/',xml[0].span.string)[0][0])
+# レースのグレード
 
 # 距離
 race_result.set_race_distance(re.split('/',xml[0].span.string)[0])
+
+# レース種別（芝ダート障害）
+race_result.set_race_kind(re.split('/',xml[0].span.string)[0])
 
 # 回り(右/左)
 race_result.set_race_around(re.split('/',xml[0].span.string)[0])
@@ -47,10 +52,6 @@ race_result.set_race_weather((re.split('/',xml[0].span.string)[1]).split(':')[1]
 # 馬場状態
 race_result.set_race_ground_state((re.split('/',xml[0].span.string)[2]).split(':')[1].replace(" ",""))
 
-### 会場 ###
-# classがactiveなのは会場と結果払い戻しの部分で１つめに会場が入るのでこの式にした
-race_result.set_race_course(soup.select('a.active')[0].string)
-
 race_table = soup.select('table.race_table_01')
 horses = race_table[0].find_all('tr')
 # 1行目はいらないので削除
@@ -60,24 +61,86 @@ horses.pop(0)
 
 for horse in horses:
     # result = copy.deepcopy(race_result)
+
+    # 馬ID
+    race_result.set_horse_id(re.split('/',horse.find_all('a',href=re.compile("^/horse"))[0].get('href'))[2])
+
+    # 馬名
     race_result.set_horse_name(horse.find_all('a',href=re.compile("^/horse"))[0].string)
-    # a=horse.find_all('a',href=re.compile("^/horse"))
-    # print(a[0].string)
-    # races = soup.find_all('a',href=re.compile("^/\?pid=race\&"))
+
+    # 着順
+    race_result.set_horse_order_of_arrival(horse.select('td[class^="txt_r"]')[0].string)
+
+    # 枠番
+    race_result.set_horse_wakuban(horse.find_all(class_=re.compile("^w"))[0].span.string)
+
+    # 馬番
+    race_result.set_horse_umaban(horse.select('td[class^="txt_r"]')[1].string)
+
+    # 単勝
+    race_result.set_horse_odds(horse.select('td[class^="txt_r"]')[3].string)
+
+    # 性
+    race_result.set_horse_sex(horse.select('td[class^="txt_c"]')[0].string)
+
+    # 馬齢
+    race_result.set_horse_age(horse.select('td[class^="txt_c"]')[0].string)
+
+    # 人気
+    # 上位3番までとそれ以下で指定されるclassが違うためclassでフィルタはしない
+    # 開業コードが入っていることがある？★要確認★
+    race_result.set_horse_popularity(horse.find_all(align="right",nowrap="nowrap")[1].span.string)
+
+    # 斤量
+    race_result.set_horse_basis_weight(horse.select('td[class^="txt_c"]')[1].string)
+
+    # soup.find_all("a", class_="link", href="/link")
+    
+    # 血統
+    race_result.set_horse_parents(re.split('/',horse.find_all('a',href=re.compile("^/horse"))[0].get('href'))[2])
+    
+    # 馬体重
+    race_result.set_horse_weight(re.split('\(',horse.select('td[nowrap^="nowrap"]')[14].string)[0])
+
+    # 馬体重(前回体重差)
+    race_result.set_horse_weight_difference(re.split('\(',horse.select('td[nowrap^="nowrap"]')[14].string)[1][:-1])
+
+    # 騎手ID
+    race_result.set_jockey_id(re.split('/',horse.find_all('a',href=re.compile("^/jockey"))[0].get('href'))[2])
+
+    # 騎手名
+    race_result.set_jockey_name(horse.find_all('a',href=re.compile("^/jockey"))[0].string)
+
+    # タイム
+    race_result.set_horse_race_time(horse.select('td[class^="txt_r"]')[2].string)
+
+    # 上がりタイム
+    race_result.set_horse_rise_time(horse.select('td[class^="txt_c"]')[3].string)
+
+    # 上がりタイムの順位
+    # 1000直など値がない場合も考慮する
+    if len(horse.select('td[class^="r"]')) is not 0:
+        race_result.set_horse_rise_time_rank(horse.select('td[class^="r"]')[0].get('class')[0])
+    
+    # 着差
+    race_result.set_horse_goal_difference(horse.select('td[nowrap^="nowrap"]')[8].string)
+    
+    # 通過順位
+    race_result.set_horse_pass_order(horse.select('td[nowrap^="nowrap"]')[10].string.replace("\n","").replace("\r",""))
+
+    # 調教師ID
+    race_result.set_trainer_id(re.split('/',horse.find_all('a',href=re.compile("^/trainer"))[0].get('href'))[2])
+
+    # 調教師
+    race_result.set_trainer_name(horse.find_all('a',href=re.compile("^/trainer"))[0].string)
+
+    # オーナーID
+    race_result.set_owner_id(re.split('/',horse.find_all('a',href=re.compile("^/owner"))[0].get('href'))[2])
+
+    # オーナー
+    race_result.set_owner_name(horse.find_all('a',href=re.compile("^/owner"))[0].string)
+
     list_result.append(race_result)
-
-
-### 馬名 ###
-### 性 ###
-### 馬齢 ###
-### 人気 ###
-### 倍率 ###
-### 父 ###
-### 母 ###
-### 母父 ###
-### 馬体重 ###
-### 騎手 ###
-### 調教師 ###
 
 # # お試し
 # print("-----------------------")

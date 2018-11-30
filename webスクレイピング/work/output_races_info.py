@@ -13,7 +13,7 @@ for file in file_list:
     html = open(file,"r")
     soup = BeautifulSoup(html,"html.parser")
 
-    with open("races.csv",'a') as file:
+    with open("../races.csv",'a') as file:
         title = re.split('[｜|]',soup.title.string)
         file.write(title[0])
         file.write(",")
